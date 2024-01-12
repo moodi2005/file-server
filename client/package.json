@@ -1,6 +1,6 @@
 {
   "name": "@webkn/file-server",
-  "version": "0.0.4",
+  "version": "0.0.41",
   "main": "index.js",
   "license": "MIT",
   "dependencies": {

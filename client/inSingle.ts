@@ -84,17 +84,27 @@ export class SingleUpload extends LitElement {
   // Defining properties for the custom element
   @property({ attribute: true, type: String }) lable!: string;
   @property({ attribute: true, type: String }) button: string = "select";
-  @property({ attribute: true, type: String }) file!: string;
+  @property({ attribute: true, type: String, reflect: true }) file!: string;
   @property({ attribute: true, type: String }) url!: string;
   @property({ attribute: true, type: String }) token!: string;
   @property({ attribute: true, type: String }) text: String =
     "Drop report here";
   @property({ attribute: true, type: String }) accept!: string;
   @property({ attribute: true, type: String }) stamp!: string;
-  @property({ attribute: true, type: Number }) level!:1|2|3|4|5|6|7|8|9;
+  @property({ attribute: true, type: Number }) level!:
+    | 1
+    | 2
+    | 3
+    | 4
+    | 5
+    | 6
+    | 7
+    | 8
+    | 9;
   @property({ attribute: true, type: Boolean }) compress!: Boolean;
   @property({ attribute: true, type: Boolean }) webp!: Boolean;
   @property({ attribute: true, type: Boolean }) resize!: Boolean;
+  private fileName!: string;
 
   // Render method to define the HTML structure of the custom element
   override render(): TemplateResult {
@@ -110,9 +120,9 @@ export class SingleUpload extends LitElement {
       <div class="box">
         <label @drop="${this.drop}" @dragover="${this.drag}" for="file">
           <p>
-            ${this.file
-              ? html`<span class="remove" @click="${this.remove}">❌</span
-                  >${this.file}`
+            ${this.fileName
+              ? html`<span class="remove" @click="${this.removeFile}">❌</span
+                  >${this.fileName}`
               : this.text}
           </p>
           <div class="button"><p>${this.button}</p></div>
@@ -157,9 +167,15 @@ export class SingleUpload extends LitElement {
     if (result.status === 200) {
       const names: string[] = await result.json();
       this.file = names[0];
+      if (this.stamp) this.fileName = this.file.split(this.stamp)[1];
       this.requestUpdate();
     } else {
       alert("error");
     }
+  }
+
+  removeFile() {
+    this.fileName = this.file = "";
+    this.requestUpdate();
   }
 }

@@ -1,18 +1,18 @@
 // Importing necessary modules from 'lit'
-import {LitElement, html, css, TemplateResult} from 'lit';
-import {customElement} from 'lit/decorators/custom-element.js';
-import {property} from 'lit/decorators/property.js';
-import {repeat} from 'lit/directives/repeat.js';
+import { LitElement, html, css, TemplateResult } from "lit";
+import { customElement } from "lit/decorators/custom-element.js";
+import { property } from "lit/decorators/property.js";
+import { repeat } from "lit/directives/repeat.js";
 
 // Declaring a global interface for HTMLElementTagNameMap
 declare global {
   interface HTMLElementTagNameMap {
-    'multi-upload': MultiUpload;
+    "multi-upload": MultiUpload;
   }
 }
 
 // Defining a custom element 'multi-upload'
-@customElement('multi-upload')
+@customElement("multi-upload")
 export class MultiUpload extends LitElement {
   // Defining CSS styles for the custom element
   static override styles = [
@@ -103,23 +103,41 @@ export class MultiUpload extends LitElement {
   ];
 
   // Defining properties for the custom element
-  @property({attribute: true, type: String}) lable!: string;
-  @property({attribute: true, type: String}) button: string = 'select';
-  @property({attribute: true, type: Array}) files: string[] = [];
-  @property({attribute: true, type: String}) url!: string;
-  @property({attribute: true, type: String}) token!: string;
-  @property({ attribute: true, type: Number }) level!:1|2|3|4|5|6|7|8|9;
-  @property({attribute: true, type: String}) text: String = 'Drop report here';
-  @property({attribute: true, type: String}) accept!: string;
-  @property({attribute: true, type: Boolean}) compress!: Boolean;
-  @property({attribute: true, type: Boolean}) webp!: Boolean;
-  @property({attribute: true, type: Boolean}) resize!: Boolean;
+  @property({ attribute: true, type: String }) lable!: string;
+  @property({ attribute: true, type: String }) button: string = "select";
+  @property({ attribute: true, type: Array, reflect: true }) files: string[] =
+    [];
+  @property({ attribute: true, type: String }) url!: string;
+  @property({ attribute: true, type: String }) token!: string;
+  @property({ attribute: true, type: Number }) level!:
+    | 1
+    | 2
+    | 3
+    | 4
+    | 5
+    | 6
+    | 7
+    | 8
+    | 9;
+  @property({ attribute: true, type: String }) text: String =
+    "Drop report here";
+  @property({ attribute: true, type: String }) accept!: string;
+  @property({ attribute: true, type: Boolean }) compress!: Boolean;
+  @property({ attribute: true, type: Boolean }) webp!: Boolean;
+  @property({ attribute: true, type: Boolean }) resize!: Boolean;
 
   // Render method to define the HTML structure of the custom element
   override render(): TemplateResult {
     return html`
       <p>${this.lable}</p>
-      <input @change="${this.upload}" multiple type="file" id="file" accept="${this.accept}" hidden />
+      <input
+        @change="${this.upload}"
+        multiple
+        type="file"
+        id="file"
+        accept="${this.accept}"
+        hidden
+      />
       <div class="box">
         <label @drop="${this.drop}" @dragover="${this.drag}" for="file">
           <p>${this.text}</p>
@@ -129,15 +147,22 @@ export class MultiUpload extends LitElement {
       <div class="nameList">
         ${repeat(
           this.files,
-          (name, index) => html` <p><span class="remove" @click="${() => this.removeFile(index)}">❌</span>${name}</p> `
+          (name, index) =>
+            html`
+              <p>
+                <span class="remove" @click="${() => this.removeFile(index)}"
+                  >❌</span
+                >${name}
+              </p>
+            `
         )}
       </div>
     `;
   }
 
-  drop(e: {dataTransfer: {files: any}; preventDefault: () => void}) {
+  drop(e: { dataTransfer: { files: any }; preventDefault: () => void }) {
     let files = e.dataTransfer.files;
-    const input = this.renderRoot.querySelector('input') as HTMLInputElement;
+    const input = this.renderRoot.querySelector("input") as HTMLInputElement;
     input.files = files;
     this.upload();
     e.preventDefault();
@@ -150,13 +175,13 @@ export class MultiUpload extends LitElement {
   // Method to handle file upload
   async upload() {
     // Code to handle file upload goes here
-    const element = this.renderRoot.querySelector('input') as HTMLInputElement;
+    const element = this.renderRoot.querySelector("input") as HTMLInputElement;
     const file = element.files?.item(0);
     const formData = new FormData();
-    if (file) formData.append('file', file);
+    if (file) formData.append("file", file);
     // send `PUT` request
     const result = await fetch(this.url, {
-      method: 'PUT',
+      method: "PUT",
       headers: {
         token: this.token,
         compress: String(this.compress),
@@ -171,7 +196,7 @@ export class MultiUpload extends LitElement {
       this.files = this.files.concat(names);
       this.requestUpdate();
     } else {
-      alert('error');
+      alert("error");
     }
   }
 
