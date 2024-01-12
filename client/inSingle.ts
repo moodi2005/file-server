@@ -91,7 +91,7 @@ export class SingleUpload extends LitElement {
     "Drop report here";
   @property({ attribute: true, type: String }) accept!: string;
   @property({ attribute: true, type: String }) stamp!: string;
-  @property({ attribute: true, type: Number }) level!: 1 | 2 | 3;
+  @property({ attribute: true, type: Number }) level!:1|2|3|4|5|6|7|8|9;
   @property({ attribute: true, type: Boolean }) compress!: Boolean;
   @property({ attribute: true, type: Boolean }) webp!: Boolean;
   @property({ attribute: true, type: Boolean }) resize!: Boolean;

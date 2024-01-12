@@ -108,7 +108,7 @@ export class MultiUpload extends LitElement {
   @property({attribute: true, type: Array}) files: string[] = [];
   @property({attribute: true, type: String}) url!: string;
   @property({attribute: true, type: String}) token!: string;
-  @property({attribute: true, type: Number}) level!: 1 | 2 | 3;
+  @property({ attribute: true, type: Number }) level!:1|2|3|4|5|6|7|8|9;
   @property({attribute: true, type: String}) text: String = 'Drop report here';
   @property({attribute: true, type: String}) accept!: string;
   @property({attribute: true, type: Boolean}) compress!: Boolean;
