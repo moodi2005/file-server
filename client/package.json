@@ -1,7 +1,6 @@
 {
-  "name": "file-server",
-  "version": "1.0.0",
-  "type": "module",
+  "name": "@webkn/file-server",
+  "version": "0.0.1",
   "main": "index.js",
   "license": "MIT",
   "dependencies": {
@@ -10,5 +9,23 @@
   },
   "devDependencies": {
     "tslib": "^2.6.2"
-  }
+  },
+  "types": "./index.d.ts",
+  "description": "client file server",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/moodi2005/file-server.git"
+  },
+  "keywords": [
+    "uploader",
+    "file-server-webkn"
+  ],
+  "author": "Mohammad Mahdi Moodi <mohammadmahdimoodi2005@gmail.com>",
+  "bugs": {
+    "url": "https://github.com/moodi2005/file-server/issues"
+  },
+  "homepage": "https://github.com/moodi2005/file-server#readme"
 }
