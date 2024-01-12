@@ -15,9 +15,6 @@ Desktop.ini
 
 # Build
 .tsbuildinfo
-*.map
-*.d.ts
-*.js
 
 !*.config.js
 !**/res/*.js
