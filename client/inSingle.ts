@@ -166,7 +166,7 @@ export class SingleUpload extends LitElement {
     });
     if (result.status === 200) {
       const names: string[] = await result.json();
-      this.file = names[0];
+      this.fileName = this.file = names[0];
       if (this.stamp) this.fileName = this.file.split(this.stamp)[1];
       this.requestUpdate();
     } else {
