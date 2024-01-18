@@ -104,7 +104,7 @@ export class SingleUpload extends LitElement {
   @property({ attribute: true, type: Boolean }) compress!: Boolean;
   @property({ attribute: true, type: Boolean }) webp!: Boolean;
   @property({ attribute: true, type: Boolean }) resize!: Boolean;
-  private fileName!: string;
+  private fileName: string = this.file;
 
   // Render method to define the HTML structure of the custom element
   override render(): TemplateResult {
