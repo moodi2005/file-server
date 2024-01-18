@@ -12,8 +12,9 @@
   },
   "scripts": {
     "s": "yarn start",
-    "install": "yarn add sharp --ignore-engines",
-    "start": "node ./src/index.js",
+    "isharp": "yarn add sharp --ignore-engines",
+    "start": "node ./build/index.js",
+    "b": "yarn build",
     "build": "npx tsc",
     "sw": "nodemon ./src/index.js",
     "bw": "npx tsc -w"

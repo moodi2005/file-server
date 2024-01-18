@@ -1,12 +1,14 @@
-FROM node:19-alpine3.16
+FROM node:21-alpine3.17
 
 ENV VERSION 0.0.0
+WORKDIR /usr/app
 
-ADD . .
 
-RUN yarn
-RUN yarn build
+ADD ./build .
+ADD ./node_modules ./node_modules
+ADD ./package.json ./package.json
 
+RUN yarn isharp
 EXPOSE 80
 
-CMD ["yarn","start"]
+CMD ["node","index.js"]
