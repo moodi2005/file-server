@@ -85,6 +85,7 @@ export class SingleUpload extends LitElement {
   @property({ attribute: true, type: String }) lable!: string;
   @property({ attribute: true, type: String }) button: string = "select";
   @property({ attribute: true, type: String, reflect: true }) file!: string;
+  @property({ attribute: true, type: String, reflect: true }) fileName: string = this.file;
   @property({ attribute: true, type: String }) url!: string;
   @property({ attribute: true, type: String }) token!: string;
   @property({ attribute: true, type: String }) text: String =
@@ -104,7 +105,6 @@ export class SingleUpload extends LitElement {
   @property({ attribute: true, type: Boolean }) compress!: Boolean;
   @property({ attribute: true, type: Boolean }) webp!: Boolean;
   @property({ attribute: true, type: Boolean }) resize!: Boolean;
-  private fileName: string = this.file;
 
   // Render method to define the HTML structure of the custom element
   override render(): TemplateResult {
