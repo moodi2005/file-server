@@ -150,9 +150,8 @@ export class MultiUpload extends LitElement {
           (name, index) =>
             html`
               <p>
-                <span class="remove" @click="${() => this.removeFile(index)}"
-                  >❌</span
-                >${name}
+                <span class="remove" @click="${() => this.removeFile(index)}">❌</span>
+                ${name}
               </p>
             `
         )}
