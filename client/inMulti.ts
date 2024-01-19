@@ -202,8 +202,8 @@ export class MultiUpload extends LitElement {
   // Method to remove the uploaded file
   removeFile(name: string) {
     // Code to remove the uploaded file goes here
-    console.log(name);
     const index = this.files.indexOf(name);
+    console.log(this.files,name,index);
     this.files = this.files.splice(index, 1);
     this.requestUpdate();
   }
