@@ -28,7 +28,11 @@ const server = http.createServer(
       }
       const files: string[] = [];
       let filename = "";
-      const bb = busboy({ headers: req.headers, defCharset: "utf8",defParamCharset: "utf8" });
+      const bb = busboy({
+        headers: req.headers,
+        defCharset: "utf8",
+        defParamCharset: "utf8",
+      });
       bb.on("file", (_, file: NodeJS.ReadableStream, info: busboy.FileInfo) => {
         // Generate a unique filename based on the current timestamp and the provided stamp
         filename = `${new Date().getTime()}_${stamp}_${info.filename}`;
@@ -91,17 +95,22 @@ const server = http.createServer(
         return res.end("You do not have access");
       }
       // get filename from url
-      let filename = req.url.split(`/${urlDownload}/`)[1];
+      const decoded = decodeURI(req.url);
+      let filename = decoded.split(`/${urlDownload}/`)[1];
       filename = filename.split("?")[0];
+      filename = filename.replaceAll("%20", " ");
 
       const path = `./${directory}/${filename}`;
       if (fs.existsSync(path)) {
         let stat = fs.statSync(path);
         const mimeType = mime.getType(path);
-        const name = filename.split(`_${stamp}_`)[0];
-        res.setHeader("Content-disposition", `attachment;filename=${name}`);
+        let nameInformation = filename.split(`_${stamp}_`);
+        let name: string;
+        if (nameInformation.length == 1) name = nameInformation[0];
+        else name = nameInformation[1];
         res.writeHead(200, {
-          "Content-Type": mimeType,
+          "Content-Type": `${mimeType}; charset=utf-8`,
+          // "Content-disposition": `attachment;filename=${Buffer.from(name).toString("عب")}`,
           "Content-Length": stat.size,
         });
 
