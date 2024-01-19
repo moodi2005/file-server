@@ -147,10 +147,10 @@ export class MultiUpload extends LitElement {
       <div class="nameList">
         ${repeat(
           this.files,
-          (name, index) =>
+          (name) =>
             html`
               <p>
-                <span class="remove" @click="${() => this.removeFile(index)}">❌</span>
+                <span class="remove" @click="${() => this.removeFile(name)}">❌</span>
                 ${name}
               </p>
             `
@@ -200,10 +200,10 @@ export class MultiUpload extends LitElement {
   }
 
   // Method to remove the uploaded file
-  removeFile(index: number) {
+  removeFile(name: string) {
     // Code to remove the uploaded file goes here
-    if (this.files.length === 1) this.files = [];
-    else this.files = this.files.splice(index, 1);
+    const index = this.files.indexOf(name);
+    this.files = this.files.splice(index, 1);
     this.requestUpdate();
   }
 }
