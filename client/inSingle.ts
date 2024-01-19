@@ -85,7 +85,6 @@ export class SingleUpload extends LitElement {
   @property({ attribute: true, type: String }) lable!: string;
   @property({ attribute: true, type: String }) button: string = "select";
   @property({ attribute: true, type: String, reflect: true }) file!: string;
-  @property({ attribute: true, type: String, reflect: true }) fileName: string = this.file;
   @property({ attribute: true, type: String }) url!: string;
   @property({ attribute: true, type: String }) token!: string;
   @property({ attribute: true, type: String }) text: String =
@@ -120,9 +119,9 @@ export class SingleUpload extends LitElement {
       <div class="box">
         <label @drop="${this.drop}" @dragover="${this.drag}" for="file">
           <p>
-            ${this.fileName
+            ${this.file
               ? html`<span class="remove" @click="${this.removeFile}">❌</span
-                  >${this.fileName}`
+                  >${this.file.split(`_${this.stamp}_`)[1] ?? this.file}`
               : this.text}
           </p>
           <div class="button"><p>${this.button}</p></div>
@@ -166,8 +165,7 @@ export class SingleUpload extends LitElement {
     });
     if (result.status === 200) {
       const names: string[] = await result.json();
-      this.fileName = this.file = names[0];
-      if (this.stamp) this.fileName = this.file.split(this.stamp)[1];
+      this.file = names[0];
       this.requestUpdate();
     } else {
       alert("error");
@@ -175,7 +173,7 @@ export class SingleUpload extends LitElement {
   }
 
   removeFile() {
-    this.fileName = this.file = "";
+    this.file = "";
     this.requestUpdate();
   }
 }
