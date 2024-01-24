@@ -104,10 +104,10 @@ const server = http.createServer(
       if (fs.existsSync(path)) {
         let stat = fs.statSync(path);
         const mimeType = mime.getType(path);
-        let nameInformation = filename.split(`_${stamp}_`);
-        let name: string;
-        if (nameInformation.length == 1) name = nameInformation[0];
-        else name = nameInformation[1];
+        // let nameInformation = filename.split(`_${stamp}_`);
+        // let name: string;
+        // if (nameInformation.length == 1) name = nameInformation[0];
+        // else name = nameInformation[1];
         res.writeHead(200, {
           "Content-Type": `${mimeType}; charset=utf-8`,
           // "Content-disposition": `attachment;filename=${Buffer.from(name).toString("عب")}`,
