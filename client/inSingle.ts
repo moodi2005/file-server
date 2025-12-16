@@ -6,14 +6,14 @@ import { property } from "lit/decorators/property.js";
 // Declaring a global interface for HTMLElementTagNameMap
 declare global {
   interface HTMLElementTagNameMap {
-    "single-upload": SingleUpload; // Adding 'single-upload' to the HTMLElementTagNameMap
+    "single-upload": SingleUpload;
   }
 }
 
 // Defining a custom element 'single-upload'
 @customElement("single-upload")
 export class SingleUpload extends LitElement {
-  // Defining CSS styles for the custom element
+  // Component styles
   static override styles = [
     css`
       :host {
@@ -24,7 +24,6 @@ export class SingleUpload extends LitElement {
         font-size: 14px;
         color: #747e8b;
       }
-
       .box {
         width: 15em;
         height: 2.7em;
@@ -34,7 +33,6 @@ export class SingleUpload extends LitElement {
         justify-content: space-between;
         align-items: center;
       }
-
       label {
         width: 100%;
         height: 100%;
@@ -45,7 +43,6 @@ export class SingleUpload extends LitElement {
         box-sizing: border-box;
         cursor: pointer;
       }
-
       .button {
         width: 4em;
         height: 2.3em;
@@ -59,21 +56,17 @@ export class SingleUpload extends LitElement {
         align-items: center;
         padding: 0;
       }
-
       .button:hover {
         background-color: #0b66de;
       }
-
       .button > p {
         color: #fff;
       }
-
       label > p {
         width: 12em;
         height: 1.3em;
         overflow: hidden;
       }
-
       .remove {
         color: red;
         cursor: pointer;
@@ -81,31 +74,24 @@ export class SingleUpload extends LitElement {
     `,
   ];
 
-  // Defining properties for the custom element
+  // Component properties
   @property({ attribute: true, type: String }) lable!: string;
   @property({ attribute: true, type: String }) button: string = "select";
   @property({ attribute: true, type: String, reflect: true }) file!: string;
   @property({ attribute: true, type: String }) url!: string;
   @property({ attribute: true, type: String }) token!: string;
-  @property({ attribute: true, type: String }) text: String =
-    "Drop report here";
+  @property({ attribute: true, type: String }) text: String = "Drop report here";
   @property({ attribute: true, type: String }) accept!: string;
   @property({ attribute: true, type: String }) stamp!: string;
-  @property({ attribute: true, type: Number }) level!:
-    | 1
-    | 2
-    | 3
-    | 4
-    | 5
-    | 6
-    | 7
-    | 8
-    | 9;
+  @property({ attribute: true, type: Number }) level!: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
   @property({ attribute: true, type: Boolean }) compress!: Boolean;
   @property({ attribute: true, type: Boolean }) webp!: Boolean;
   @property({ attribute: true, type: Boolean }) resize!: Boolean;
 
-  // Render method to define the HTML structure of the custom element
+  // Upload progress percentage (0–100)
+  @property({ type: Number }) progress: number = 0;
+
+  // Render component UI
   override render(): TemplateResult {
     return html`
       <p>${this.lable}</p>
@@ -119,10 +105,14 @@ export class SingleUpload extends LitElement {
       <div class="box">
         <label @drop="${this.drop}" @dragover="${this.drag}" for="file">
           <p>
-            ${this.file
-              ? html`<span class="remove" @click="${this.removeFile}">❌</span
-                  >${this.file.split(`_${this.stamp}_`)[1] ?? this.file}`
-              : this.text}
+            ${
+              this.progress > 0 && this.progress < 100
+                ? `${this.progress}%`
+                : this.file
+                ? html`<span class="remove" @click="${this.removeFile}">❌</span
+                    >${this.file.split(`_${this.stamp}_`)[1] ?? this.file}`
+                : this.text
+            }
           </p>
           <div class="button"><p>${this.button}</p></div>
         </label>
@@ -130,50 +120,82 @@ export class SingleUpload extends LitElement {
     `;
   }
 
-  // Method to handle file drop event
+  // Handle file drop into the component
   drop(e: { dataTransfer: { files: any }; preventDefault: () => void }) {
-    let files = e.dataTransfer.files;
+    const files = e.dataTransfer.files;
     const input = this.renderRoot.querySelector("input") as HTMLInputElement;
     input.files = files;
     this.upload();
     e.preventDefault();
   }
 
-  // Method to handle file drag event
+  // Prevent default drag behavior
   drag(e: Event) {
     e.preventDefault();
   }
 
-  // Method to handle file upload
+  /**
+   * NOTE:
+   * Fetch API does NOT provide any official way to track upload progress.
+   * Upload progress events are only available via XMLHttpRequest.
+   * Therefore XHR is used here to show real-time upload percentage.
+   */
   async upload() {
-    // Code to handle file upload goes here
     const element = this.renderRoot.querySelector("input") as HTMLInputElement;
     const file = element.files?.item(0);
+    if (!file) return;
+
     const formData = new FormData();
-    if (file) formData.append("file", file);
-    // send `PUT` request
-    const result = await fetch(this.url, {
-      method: "PUT",
-      headers: {
-        token: this.token,
-        compress: String(this.compress),
-        level: String(this.level),
-        webp: String(this.webp),
-        resize: String(this.resize),
-      },
-      body: formData,
+    formData.append("file", file);
+
+    this.progress = 0;
+
+    await new Promise<void>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("PUT", this.url);
+
+      // Custom headers
+      xhr.setRequestHeader("token", this.token);
+      xhr.setRequestHeader("compress", String(this.compress));
+      xhr.setRequestHeader("level", String(this.level));
+      xhr.setRequestHeader("webp", String(this.webp));
+      xhr.setRequestHeader("resize", String(this.resize));
+
+      // Upload progress listener
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          this.progress = Math.round((e.loaded / e.total) * 100);
+        }
+      };
+
+      // Handle successful response
+      xhr.onload = () => {
+        if (xhr.status === 200) {
+          const names: string[] = JSON.parse(xhr.responseText);
+          this.file = names[0];
+          this.progress = 0;
+          this.requestUpdate();
+          resolve();
+        } else {
+          alert("error");
+          reject();
+        }
+      };
+
+      // Handle network error
+      xhr.onerror = () => {
+        alert("error");
+        reject();
+      };
+
+      xhr.send(formData);
     });
-    if (result.status === 200) {
-      const names: string[] = await result.json();
-      this.file = names[0];
-      this.requestUpdate();
-    } else {
-      alert("error");
-    }
   }
 
+  // Remove selected file and reset state
   removeFile() {
     this.file = "";
+    this.progress = 0;
     this.requestUpdate();
   }
 }
