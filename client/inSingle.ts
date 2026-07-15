@@ -77,16 +77,21 @@ export class SingleUpload extends LitElement {
   // Component properties
   @property({ attribute: true, type: String }) lable!: string;
   @property({ attribute: true, type: String }) button: string = "select";
-  @property({ attribute: true, type: String, reflect: true }) file!: string;
+
+  /**
+   * The server's ref for the uploaded file — "<id>/<name>". This is the value
+   * to persist; it addresses the file and carries its display name.
+   */
+  @property({ attribute: true, type: String, reflect: true }) file: string = "";
+
   @property({ attribute: true, type: String }) url!: string;
   @property({ attribute: true, type: String }) token!: string;
   @property({ attribute: true, type: String }) text: String = "Drop report here";
   @property({ attribute: true, type: String }) accept!: string;
-  @property({ attribute: true, type: String }) stamp!: string;
   @property({ attribute: true, type: Number }) level!: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
-  @property({ attribute: true, type: Boolean }) compress!: Boolean;
-  @property({ attribute: true, type: Boolean }) webp!: Boolean;
-  @property({ attribute: true, type: Boolean }) resize!: Boolean;
+  @property({ attribute: true, type: Boolean }) compress: boolean = false;
+  @property({ attribute: true, type: Boolean }) webp: boolean = false;
+  @property({ attribute: true, type: Boolean }) resize: boolean = false;
 
   // Upload progress percentage (0–100)
   @property({ type: Number }) progress: number = 0;
@@ -105,14 +110,13 @@ export class SingleUpload extends LitElement {
       <div class="box">
         <label @drop="${this.drop}" @dragover="${this.drag}" for="file">
           <p>
-            ${
-              this.progress > 0 && this.progress < 100
-                ? `${this.progress}%`
-                : this.file
-                ? html`<span class="remove" @click="${this.removeFile}">❌</span
-                    >${this.file.split(`_${this.stamp}_`)[1] ?? this.file}`
-                : this.text
-            }
+            ${this.progress > 0 && this.progress < 100
+        ? `${this.progress}%`
+        : this.file
+          ? html`<span class="remove" @click="${this.removeFile}">❌</span
+                    >${this.getName(this.file)}`
+          : this.text
+      }
           </p>
           <div class="button"><p>${this.button}</p></div>
         </label>
@@ -134,6 +138,17 @@ export class SingleUpload extends LitElement {
     e.preventDefault();
   }
 
+  getName(ref: string): string {
+    const slash = ref.indexOf("/");
+    if (slash === -1) return ref;
+    try {
+      return decodeURIComponent(ref.slice(slash + 1));
+    } catch {
+      // Malformed percent-encoding: show the raw tail rather than throwing in a render pass.
+      return ref.slice(slash + 1);
+    }
+  }
+
   /**
    * NOTE:
    * Fetch API does NOT provide any official way to track upload progress.
@@ -150,52 +165,82 @@ export class SingleUpload extends LitElement {
 
     this.progress = 0;
 
-    await new Promise<void>((resolve, reject) => {
+    await new Promise<void>((resolve) => {
       const xhr = new XMLHttpRequest();
-      xhr.open("PUT", this.url);
+      xhr.open("PUT", `${this.url.replace(/\/+$/, "")}/upload`);
 
-      // Custom headers
       xhr.setRequestHeader("token", this.token);
-      xhr.setRequestHeader("compress", String(this.compress));
-      xhr.setRequestHeader("level", String(this.level));
-      xhr.setRequestHeader("webp", String(this.webp));
-      xhr.setRequestHeader("resize", String(this.resize));
+      // The server reads these as strict "true"/"1" — a plain String(false) is
+      // correctly off, which the old server got wrong and treated as on.
+      xhr.setRequestHeader("compress", String(Boolean(this.compress)));
+      xhr.setRequestHeader("webp", String(Boolean(this.webp)));
+      xhr.setRequestHeader("resize", String(Boolean(this.resize)));
+      if (this.level !== undefined) {
+        xhr.setRequestHeader("level", String(this.level));
+      }
 
-      // Upload progress listener
       xhr.upload.onprogress = (e) => {
         if (e.lengthComputable) {
           this.progress = Math.round((e.loaded / e.total) * 100);
         }
       };
 
-      // Handle successful response
       xhr.onload = () => {
-        if (xhr.status === 200) {
-          const names: string[] = JSON.parse(xhr.responseText);
-          this.file = names[0];
-          this.progress = 0;
-          this.requestUpdate();
-          resolve();
-        } else {
-          alert("error");
-          reject();
+        this.progress = 0;
+
+        if (xhr.status !== 200) {
+          this.fail("http", xhr.status, xhr.responseText);
+          return resolve();
         }
+
+        try {
+          // The server answers with one ref string per file.
+          const refs: string[] = JSON.parse(xhr.responseText);
+          this.file = refs[0];
+          this.dispatchEvent(
+            new CustomEvent("upload-success", {
+              detail: { ref: refs[0], name: this.getName(refs[0]) },
+              bubbles: true,
+              composed: true,
+            })
+          );
+        } catch (err) {
+          this.fail("parse", xhr.status, String(err));
+        }
+
+        resolve();
       };
 
-      // Handle network error
       xhr.onerror = () => {
-        alert("error");
-        reject();
+        this.progress = 0;
+        this.fail("network", 0, "network error");
+        resolve();
       };
 
       xhr.send(formData);
     });
   }
 
+  /**
+   * A component has no business calling alert() — it blocks the host app's UI
+   * and gives it no way to react. The host listens for `upload-error` instead.
+   */
+  private fail(kind: string, status: number, body: string) {
+    this.dispatchEvent(
+      new CustomEvent("upload-error", {
+        detail: { kind, status, body },
+        bubbles: true,
+        composed: true,
+      })
+    );
+  }
+
   // Remove selected file and reset state
   removeFile() {
     this.file = "";
     this.progress = 0;
-    this.requestUpdate();
+    this.dispatchEvent(
+      new CustomEvent("file-removed", { bubbles: true, composed: true })
+    );
   }
 }

@@ -47,3 +47,5 @@ temp
 _data
 db
 chrome-profile
+# Bundled output
+dist

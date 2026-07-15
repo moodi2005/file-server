@@ -1,34 +1,30 @@
-export interface FileStorageConfig {
-  /** Base url of the file server, e.g. "https://files.example.com". */
-  url: string;
-  /** Short-lived user token, passed through to the access service. */
-  token: string;
-}
-
 /**
- * Handles parsing and URL generation for server upload references.
+ * A `FileRef` instance handles parsing and URL generation for server upload references.
  * A ref is the single string the server hands back per upload:
  *
  * n1-202608-a3f2b8c19d4e/image.png
  * └────────┬───────────┘ └───┬───┘
  * file id         display name (url-encoded)
+ *
+ * Parsing lives here, in one place, shared by every component. This module
+ * ensures there is no second copy to drift.
  */
 export class FileStorage {
-  readonly url: string;
-  public token: string;
+  private base: string;
+  private token: string;
 
-  constructor(config: FileStorageConfig) {
+  constructor(base: string, token: string) {
     // Trim trailing slashes once during initialization for optimization
-    this.url = config.url.replace(/\/+$/, "");
-    this.token = config.token;
+    this.base = base.replace(/\/+$/, "");
+    this.token = token;
   }
 
   /** Everything before the first slash. */
-  public static id(ref: string): string {
+  public static getId(ref: string): string {
     return ref.split("/")[0];
   }
 
-  /** Display name carried inside the ref — no request needed. */
+  /** The original filename, exactly as uploaded. */
   public static getName(ref: string): string {
     const slash = ref.indexOf("/");
     if (slash === -1) return ref;
@@ -40,9 +36,9 @@ export class FileStorage {
     }
   }
 
-  /** Download url for a stored ref: `<base>/f/<ref>?token=<token>` */
-  public getFile(ref: string): string {
+  /** `<base>/f/<ref>?token=<token>` */
+  public url(ref: string): string {
     if (!this.token) return '';
-    return `${this.url}/f/${ref}?token=${encodeURIComponent(this.token)}`;
+    return `${this.base}/f/${ref}?token=${encodeURIComponent(this.token)}`;
   }
 }

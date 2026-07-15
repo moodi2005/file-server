@@ -86,18 +86,32 @@ export class MultiUpload extends LitElement {
   // Component properties
   @property({ attribute: true, type: String }) lable!: string;
   @property({ attribute: true, type: String }) button: string = "select";
+  /** Server refs ("<id>/<name>"), in upload order. Persist these. */
   @property({ attribute: true, type: Array }) files: string[] = [];
+
   @property({ attribute: true, type: String }) url!: string;
   @property({ attribute: true, type: String }) token!: string;
   @property({ attribute: true, type: Number }) level!: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
   @property({ attribute: true, type: String }) text: String = "Drop report here";
   @property({ attribute: true, type: String }) accept!: string;
-  @property({ attribute: true, type: Boolean }) compress!: Boolean;
-  @property({ attribute: true, type: Boolean }) webp!: Boolean;
-  @property({ attribute: true, type: Boolean }) resize!: Boolean;
+  @property({ attribute: true, type: Boolean }) compress: boolean = false;
+  @property({ attribute: true, type: Boolean }) webp: boolean = false;
+  @property({ attribute: true, type: Boolean }) resize: boolean = false;
 
   // Upload progress percentage
   @property({ type: Number }) progress: number = 0;
+
+  getName(ref: string): string {
+    const slash = ref.indexOf("/");
+    if (slash === -1) return ref;
+    try {
+      return decodeURIComponent(ref.slice(slash + 1));
+    } catch {
+      // Malformed percent-encoding: show the raw tail rather than throwing in a render pass.
+      return ref.slice(slash + 1);
+    }
+  }
+
 
   // Render component UI
   override render(): TemplateResult {
@@ -134,11 +148,11 @@ export class MultiUpload extends LitElement {
       <div class="nameList">
         ${repeat(
           this.files,
-          (name) => name,
-          (name) => html`
+          (ref) => ref,
+          (ref) => html`
             <p>
-              <span class="remove" @click="${() => this.removeFile(name)}">❌</span>
-              ${name}
+              <span class="remove" @click="${() => this.removeFile(ref)}">❌</span>
+              ${this.getName(ref)}
             </p>
           `
         )}
@@ -168,54 +182,89 @@ export class MultiUpload extends LitElement {
     if (!fileList || fileList.length === 0) return;
 
     const formData = new FormData();
-    formData.append("file", fileList[0]); // backend behavior unchanged
+    // Every selected file, not just the first. This component is called
+    // multi-upload but only ever sent fileList[0], so picking five files
+    // uploaded one and silently dropped four.
+    for (const file of Array.from(fileList)) {
+      formData.append("file", file);
+    }
 
     this.progress = 0;
 
-    await new Promise<void>((resolve, reject) => {
+    await new Promise<void>((resolve) => {
       const xhr = new XMLHttpRequest();
-      xhr.open("PUT", this.url);
+      xhr.open("PUT", `${this.url.replace(/\/+$/, "")}/upload`);
 
-      // Custom headers
       xhr.setRequestHeader("token", this.token);
-      xhr.setRequestHeader("compress", String(this.compress));
-      xhr.setRequestHeader("level", String(this.level));
-      xhr.setRequestHeader("webp", String(this.webp));
-      xhr.setRequestHeader("resize", String(this.resize));
+      xhr.setRequestHeader("compress", String(Boolean(this.compress)));
+      xhr.setRequestHeader("webp", String(Boolean(this.webp)));
+      xhr.setRequestHeader("resize", String(Boolean(this.resize)));
+      if (this.level !== undefined) {
+        xhr.setRequestHeader("level", String(this.level));
+      }
 
-      // Upload progress handler
       xhr.upload.onprogress = (e) => {
         if (e.lengthComputable) {
           this.progress = Math.round((e.loaded / e.total) * 100);
         }
       };
 
-      // Handle response
       xhr.onload = () => {
-        if (xhr.status === 200) {
-          const names: string[] = JSON.parse(xhr.responseText);
-          this.files = this.files.concat(names);
-          this.progress = 0;
-          this.requestUpdate();
-          resolve();
-        } else {
-          alert("error");
-          reject();
+        this.progress = 0;
+
+        if (xhr.status !== 200) {
+          this.fail("http", xhr.status, xhr.responseText);
+          return resolve();
         }
+
+        try {
+          // The server answers with one ref string per file.
+          const refs: string[] = JSON.parse(xhr.responseText);
+          this.files = this.files.concat(refs);
+          this.dispatchEvent(
+            new CustomEvent("upload-success", {
+              detail: { refs, names: refs.map(this.getName) },
+              bubbles: true,
+              composed: true,
+            })
+          );
+        } catch (err) {
+          this.fail("parse", xhr.status, String(err));
+        }
+
+        resolve();
       };
 
       xhr.onerror = () => {
-        alert("error");
-        reject();
+        this.progress = 0;
+        this.fail("network", 0, "network error");
+        resolve();
       };
 
       xhr.send(formData);
     });
   }
 
+  /** Host apps listen for this; a library must not call alert(). */
+  private fail(kind: string, status: number, body: string) {
+    this.dispatchEvent(
+      new CustomEvent("upload-error", {
+        detail: { kind, status, body },
+        bubbles: true,
+        composed: true,
+      })
+    );
+  }
+
   // Remove uploaded file from list
-  removeFile(name: string) {
-    this.files = this.files.filter((f) => f !== name);
-    this.requestUpdate();
+  removeFile(ref: string) {
+    this.files = this.files.filter((f) => f !== ref);
+    this.dispatchEvent(
+      new CustomEvent("file-removed", {
+        detail: { ref },
+        bubbles: true,
+        composed: true,
+      })
+    );
   }
 }
