@@ -84,7 +84,7 @@ export class MultiUpload extends LitElement {
   ];
 
   // Component properties
-  @property({ attribute: true, type: String }) lable!: string;
+  @property({ attribute: true, type: String }) label!: string;
   @property({ attribute: true, type: String }) button: string = "select";
   /** Server refs ("<id>/<name>"), in upload order. Persist these. */
   @property({ attribute: true, type: Array }) files: string[] = [];
@@ -116,7 +116,7 @@ export class MultiUpload extends LitElement {
   // Render component UI
   override render(): TemplateResult {
     return html`
-      <p>${this.lable}</p>
+      <p>${this.label}</p>
 
       <input
         @change="${this.upload}"
