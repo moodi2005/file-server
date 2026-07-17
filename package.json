@@ -1,6 +1,6 @@
 {
   "name": "@webkn/file-server",
-  "version": "1.0.2",
+  "version": "2.0.2",
   "type": "module",
   "description": "Upload and serve files",
   "main": "build/index.js",
