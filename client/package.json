@@ -1,7 +1,33 @@
 {
   "name": "@webkn/file-server",
-  "version": "2.0.2",
+  "version": "2.1.3",
+  "type": "module",
   "main": "index.js",
+  "module": "index.js",
+  "types": "index.d.ts",
+  "sideEffects": [
+    "./index.js",
+    "./inSingle.js",
+    "./inMulti.js"
+  ],
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./index.js"
+    },
+    "./inSingle.js": {
+      "types": "./inSingle.d.ts",
+      "default": "./inSingle.js"
+    },
+    "./inMulti.js": {
+      "types": "./inMulti.d.ts",
+      "default": "./inMulti.js"
+    },
+    "./base.js": {
+      "types": "./base.d.ts",
+      "default": "./base.js"
+    }
+  },
   "license": "MIT",
   "peerDependencies": {
     "lit": "^3.1.0"
@@ -11,8 +37,7 @@
     "tslib": "^2.6.2",
     "typescript": "^5.3.3"
   },
-  "types": "./index.d.ts",
-  "description": "client file server",
+  "description": "File-server upload web components (single & multi)",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

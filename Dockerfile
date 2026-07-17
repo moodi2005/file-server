@@ -8,8 +8,6 @@ WORKDIR /app
 COPY package.json yarn.lock ./
 
 # Crucial: Rewrite the mirror URLs in yarn.lock to use the official NPM registry on the fly
-RUN sed -i 's|https://mirror-npm.runflare.com|https://registry.npmjs.org|g' yarn.lock
-
 # Now Yarn will bypass the mirror entirely
 RUN yarn install --frozen-lockfile
 
@@ -27,9 +25,7 @@ WORKDIR /app
 COPY package.json yarn.lock ./
 
 # Crucial: Perform the same rewrite in the production runtime stage
-RUN sed -i 's|https://mirror-npm.runflare.com|https://registry.npmjs.org|g' yarn.lock && \
-    yarn install --frozen-lockfile --production && \
-    yarn cache clean
+RUN yarn install --frozen-lockfile
 
 COPY --from=build /app/dist/index.js ./dist/index.js
 COPY --from=build /app/dist/package.json ./dist/package.json

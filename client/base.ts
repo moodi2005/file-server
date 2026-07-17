@@ -11,7 +11,7 @@ export interface UploadErrorDetail {
 /**
  * Shared behaviour for the upload elements: form participation, the XHR that
  * talks to the server, and one event vocabulary.
- *
+ *ث
  * Both components were near-identical copies of each other, which is how
  * multi-upload ended up sending only the first file while single-upload was
  * fine. Anything they share lives here now.
@@ -22,7 +22,19 @@ export abstract class UploadBase extends LitElement {
 
   static override styles = css`
     :host {
-      /* Theming surface. Override any of these from the host page. */
+      /* Only the field HEIGHT tracks the Vaadin Lumo token, so the control
+         lines up on the same row as Lumo fields next to it. Custom properties
+         inherit through the shadow boundary, so inside a Vaadin app this
+         resolves to the live field height; the fallback is Lumo's default.
+         Everything else — radius, font size, colours — is this component's own
+         look, left as it was. */
+      --fs-field-height: var(--lumo-size-m, 2.25rem);
+      --fs-radius: 8px;
+      --fs-font-size: 14px;
+      --fs-label-size: 14px;
+
+      --fs-gap: 0.5rem;
+      --fs-font: IRANSans, IRANYekan, Vazirmatn, system-ui, sans-serif;
       --fs-accent: #0c6ce9;
       --fs-accent-contrast: #ffffff;
       --fs-bg: #ffffff;
@@ -31,14 +43,15 @@ export abstract class UploadBase extends LitElement {
       --fs-muted: #6b7480;
       --fs-border: #d5dae0;
       --fs-danger: #d92d20;
-      --fs-radius: 8px;
-      --fs-gap: 0.5rem;
-      --fs-font: system-ui, -apple-system, IRANSans, Roboto, sans-serif;
+
+      /* Persian, right-to-left. All internal layout uses logical properties so
+         the direction flips cleanly from this one declaration. */
+      direction: rtl;
       display: inline-flex;
       flex-direction: column;
       gap: var(--fs-gap);
       font-family: var(--fs-font);
-      font-size: 14px;
+      font-size: var(--fs-font-size);
       color: var(--fs-fg);
       inline-size: 100%;
       max-inline-size: 22rem;
@@ -64,7 +77,10 @@ export abstract class UploadBase extends LitElement {
       pointer-events: none;
     }
 
+    /* Label size follows the Lumo token so it lines up with a Vaadin field's
+       label; the colour and weight are this component's own look. */
     .label {
+      font-size: var(--fs-label-size);
       font-weight: 500;
       color: var(--fs-fg);
     }
@@ -78,6 +94,8 @@ export abstract class UploadBase extends LitElement {
        announced as one. The old markup relied on a <label for> inside a shadow
        root, which does not reach the input reliably and left it unreachable by
        keyboard. */
+    /* Height, radius and padding track the Lumo field tokens so the control
+       aligns on the same row as neighbouring Vaadin fields. */
     .zone {
       display: flex;
       align-items: center;
@@ -85,11 +103,15 @@ export abstract class UploadBase extends LitElement {
       gap: var(--fs-gap);
       box-sizing: border-box;
       inline-size: 100%;
-      min-block-size: 3rem;
-      padding: 0.5rem 0.5rem 0.5rem 0.75rem;
+      min-block-size: var(--fs-field-height);
+      padding-block: 0;
+      /* No padding on the end side: the button sits flush against that edge. */
+      padding-inline: 0.75rem 0;
       border: 1px solid var(--fs-border);
       border-radius: var(--fs-radius);
       background: var(--fs-bg);
+      /* Clip the full-height button to the field's rounded corners. */
+      overflow: hidden;
       cursor: pointer;
       text-align: start;
       font: inherit;
@@ -121,6 +143,9 @@ export abstract class UploadBase extends LitElement {
     .zone-text {
       flex: 1;
       min-inline-size: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -131,14 +156,46 @@ export abstract class UploadBase extends LitElement {
       color: var(--fs-fg);
     }
 
+    /* Clicking the name opens the file. It is a real link — middle-click and
+       "open in new tab" work, and it is announced as a link. */
+    .file-link {
+      min-inline-size: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--fs-accent);
+      text-decoration: none;
+      cursor: pointer;
+      /* A filename may be Latin ("photo.png") or Persian inside an RTL line;
+         plaintext lays each out by its own content so neither reverses. */
+      unicode-bidi: plaintext;
+      text-align: start;
+    }
+
+    .file-link:hover {
+      text-decoration: underline;
+    }
+
+    .file-link:focus-visible {
+      outline: 2px solid var(--fs-accent);
+      outline-offset: 2px;
+      border-radius: 2px;
+    }
+
+    /* Attached to the field's end edge, full height. The zone's overflow:hidden
+       rounds its outer corners to match the field. */
     .button {
       flex: none;
-      padding: 0.4rem 0.8rem;
+      align-self: stretch;
+      display: inline-flex;
+      align-items: center;
+      padding-inline: 0.9rem;
+      margin-inline-start: 0.5rem;
       border: 0;
-      border-radius: calc(var(--fs-radius) - 2px);
       background: var(--fs-accent);
       color: var(--fs-accent-contrast);
       font: inherit;
+      font-size: var(--fs-label-size);
       font-weight: 500;
       white-space: nowrap;
     }
@@ -194,6 +251,27 @@ export abstract class UploadBase extends LitElement {
       outline-offset: 1px;
     }
 
+    .file-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+    }
+
+    .file-row {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.3rem 0.4rem;
+      border-radius: calc(var(--fs-radius) - 3px);
+    }
+
+    .file-row:hover {
+      background: var(--fs-bg-subtle);
+    }
+
     /* Screen-reader-only live region. */
     .sr {
       position: absolute;
@@ -221,10 +299,10 @@ export abstract class UploadBase extends LitElement {
   @property({ type: String }) label = "";
 
   /** Text shown when nothing is selected. */
-  @property({ type: String }) placeholder = "Drop a file here";
+  @property({ type: String }) placeholder = "فایل را اینجا رها کنید";
 
   /** Text on the button. */
-  @property({ type: String }) button = "Select";
+  @property({ type: String }) button = "انتخاب";
 
   /** Passed to the file input, e.g. "image/*". */
   @property({ type: String }) accept = "";
@@ -300,12 +378,13 @@ export abstract class UploadBase extends LitElement {
 
       xhr.onload = () => {
         if (xhr.status !== 200) {
-          let message = xhr.statusText || "Upload failed";
+          // Prefer the server's own message — it is already Persian.
+          let message = "بارگذاری ناموفق بود";
           try {
             const body = JSON.parse(xhr.responseText);
             if (body?.message) message = body.message;
           } catch {
-            /* non-JSON error body; keep the status text */
+            /* non-JSON error body; keep the fallback */
           }
           return reject({ kind: "http", status: xhr.status, message });
         }
@@ -313,14 +392,14 @@ export abstract class UploadBase extends LitElement {
         try {
           resolve(JSON.parse(xhr.responseText) as string[]);
         } catch {
-          reject({ kind: "parse", status: xhr.status, message: "Bad response" });
+          reject({ kind: "parse", status: xhr.status, message: "پاسخ نامعتبر سرور" });
         }
       };
 
       xhr.onerror = () =>
-        reject({ kind: "network", status: 0, message: "Network error" });
+        reject({ kind: "network", status: 0, message: "خطای شبکه" });
       xhr.onabort = () =>
-        reject({ kind: "abort", status: 0, message: "Upload cancelled" });
+        reject({ kind: "abort", status: 0, message: "بارگذاری لغو شد" });
 
       this.emit("upload-start", { count: files.length });
       xhr.send(form);
@@ -349,7 +428,7 @@ export abstract class UploadBase extends LitElement {
     const detail = (
       err && typeof err === "object" && "kind" in err
         ? err
-        : { kind: "network", status: 0, message: String(err) }
+        : { kind: "network", status: 0, message: "خطای شبکه" }
     ) as UploadErrorDetail;
 
     this.error = detail;

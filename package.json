@@ -1,11 +1,10 @@
 {
   "name": "fileserver",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "description": "Upload and serve files",
   "main": "build/index.js",
   "license": "UNLICENSED",
-  "private": true,
   "engines": {
     "node": ">=22"
   },
@@ -16,7 +15,7 @@
     "sharp": "^0.33.5"
   },
   "scripts": {
-    "build": "tsc",
+    "b": "tsc",
     "build:watch": "tsc -w",
     "bundle": "tsc && node ./scripts/bundle.mjs",
     "start": "node ./build/index.js",

@@ -20,12 +20,12 @@ export class FileStorage {
   }
 
   /** Everything before the first slash. */
-  public static getId(ref: string): string {
+  public getId(ref: string): string {
     return ref.split("/")[0];
   }
 
   /** The original filename, exactly as uploaded. */
-  public static getName(ref: string): string {
+  public getName(ref: string): string {
     const slash = ref.indexOf("/");
     if (slash === -1) return ref;
     try {

@@ -1,0 +1,14 @@
+node_modules
+build
+dist
+client
+data
+uploads
+.git
+.vscode
+*.log
+*.log.*
+package-lock.json
+.DS_Store
+
+# scripts/ is NOT ignored — the build stage needs scripts/bundle.mjs.
